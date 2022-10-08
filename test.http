@@ -1,0 +1,100 @@
+POST http://localhost:8000/auth/signup HTTP/2.0
+Content-Type: application/json
+
+{
+    "username" : "def",
+    "email" : "def@zzz.com",
+    "password" : "hithere2"
+}
+
+###
+POST http://localhost:8000/auth/signin HTTP/1.1
+content-type: application/json
+
+{
+    "username": "kals2h",
+    "password" : "hithere2"
+}
+###
+
+GET http://localhost:8000/auth/me HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTE2NzkwMS4xMTQ5NDE4fQ.Mh54VhJUxKZnolybqDE58vflXfB8_EKHj0O3YZBqoPM
+
+###
+POST http://localhost:8000/tweets/new HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTIwODU0Ni45Nzg0MTR9.6Lb-Vx7NDkLmewghpjuAMadITIxIVvfv3OkD2vmS8Zo
+
+{
+    "text": "Hello World //tweet1"
+}
+
+###
+GET http://localhost:8000/tweets?by_user=kals2h HTTP/1.1
+content-type: application/json
+
+###
+GET http://localhost:8000/tweets/63410ca1d08562151f6ae2ed HTTP/1.1
+content-type: application/json
+
+###
+POST http://localhost:8000/tweets/reply HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTIwODU0Ni45Nzg0MTR9.6Lb-Vx7NDkLmewghpjuAMadITIxIVvfv3OkD2vmS8Zo
+
+{
+    "text": "Hello World //2",
+    "reply_to": "63410ca1d08562151f6ae2ed"
+}
+
+###
+
+POST http://localhost:8000/tweets/like HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTIwODU0Ni45Nzg0MTR9.6Lb-Vx7NDkLmewghpjuAMadITIxIVvfv3OkD2vmS8Zo
+
+{
+    "tweet_id": "634105b1ec15ff441a87d3b8"
+}
+
+###
+
+POST http://localhost:8000/tweets/unlike HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTIwODU0Ni45Nzg0MTR9.6Lb-Vx7NDkLmewghpjuAMadITIxIVvfv3OkD2vmS8Zo
+
+{
+    "tweet_id": "634105b1ec15ff441a87d3b8"
+}
+
+###
+GET http://localhost:8000/tweets/replies/63410c5362c2ccee67104dc6 HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MDU4Y2E0NmZiODgxZGE5Yjc4MmFjIiwidXNlcl9uYW1lIjoia2FsczJoIiwiZXhwaXJlcyI6MTY2NTIwODU0Ni45Nzg0MTR9.6Lb-Vx7NDkLmewghpjuAMadITIxIVvfv3OkD2vmS8Zo
+    
+
+###
+POST http://localhost:8000/users/follow/63413887f8f187eb44e95a3f HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MTM4NTlmOGYxODdlYjQ0ZTk1YTNlIiwidXNlcl9uYW1lIjoiYWJjIiwiZXhwaXJlcyI6MTY2NTIyMjI1MC40ODM0Mzh9.WUiG2SOHasVQLxkp1bPGUtazwFG4x02kZD6XEuZdlx8
+
+{
+    
+}
+
+###
+POST http://localhost:8000/users/unfollow/63413887f8f187eb44e95a3f HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MTM4NTlmOGYxODdlYjQ0ZTk1YTNlIiwidXNlcl9uYW1lIjoiYWJjIiwiZXhwaXJlcyI6MTY2NTIyMjI1MC40ODM0Mzh9.WUiG2SOHasVQLxkp1bPGUtazwFG4x02kZD6XEuZdlx8
+
+{
+    
+}
+
+
+###
+GET http://localhost:8000/tweets/feed HTTP/1.1
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjM0MTM4NTlmOGYxODdlYjQ0ZTk1YTNlIiwidXNlcl9uYW1lIjoiYWJjIiwiZXhwaXJlcyI6MTY2NTIyMjI1MC40ODM0Mzh9.WUiG2SOHasVQLxkp1bPGUtazwFG4x02kZD6XEuZdlx8
+
