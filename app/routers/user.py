@@ -16,7 +16,7 @@ db.users.create_index([('username', TEXT)], default_language="english")
 
 
 @router.post("/follow/{uid}")
-def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
@@ -24,7 +24,7 @@ def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(s
     user_id = userctx["user_id"]
 
     try:
-        res = db.users.find_one_and_update(
+        res = await db.users.find_one_and_update(
             {"_id": ObjectId(uid)},
             {"$addToSet": {"followers": ObjectId(user_id)}},
             {"projection": {"_id": 1}}
@@ -32,7 +32,7 @@ def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(s
         if not res:
             raise HTTPException(status_code=404, detail="User not found")
 
-        res = db.users.find_one_and_update(
+        res = await db.users.find_one_and_update(
             {"_id": ObjectId(user_id)},
             {"$addToSet": {"following": ObjectId(uid)}},
         )
@@ -50,7 +50,7 @@ def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(s
         "time": datetime.utcnow(),
         "read": False
     }
-    db.notifications.insert_one(new_notification)
+    await db.notifications.insert_one(new_notification)
 
     return {"success": True}
 
@@ -58,7 +58,7 @@ def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(s
 # __
 
 @router.post("/unfollow/{uid}")
-def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
@@ -66,7 +66,7 @@ def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security
     user_id = userctx["user_id"]
 
     try:
-        res = db.users.find_one_and_update(
+        res = await db.users.find_one_and_update(
             {"_id": ObjectId(uid)},
             {"$pull": {"followers": ObjectId(user_id)}},
             {"projection": {"_id": 1}}
@@ -74,7 +74,7 @@ def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security
         if not res:
             raise HTTPException(status_code=404, detail="User not found")
 
-        res = db.users.find_one_and_update(
+        res = await db.users.find_one_and_update(
             {"_id": ObjectId(user_id)},
             {"$pull": {"following": ObjectId(uid)}},
         )
@@ -86,15 +86,15 @@ def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security
 
 
 @router.get("/search/{q}")
-def search_user(q: str):
-    user = db.users.find({"$text": {"$search": q}})
+async def search_user(q: str):
+    user = await db.users.find({"$text": {"$search": q}})
     user = [reformat_id(ele) for ele in list(user)]
     return user
 
 
 @router.get("/randomuser")
-def random_user():
-    users = db.users.aggregate([{"$sample": {"size": 3}}])
+async def random_user():
+    users = await db.users.aggregate([{"$sample": {"size": 3}}])
     userlist = []
     for user in users:
         user = reformat_id(user)

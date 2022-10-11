@@ -17,7 +17,7 @@ security = HTTPBearer()
 
 
 @router.post("/new")
-def new_tweet(body: TweetRequest, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def new_tweet(body: TweetRequest, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
@@ -34,8 +34,8 @@ def new_tweet(body: TweetRequest, credentials: HTTPAuthorizationCredentials = Se
         "media": body.media
     }
     try:
-        db_res = db.tweets.insert_one(new_tweet)
-        new_tweet = db.tweets.find_one({"_id": db_res.inserted_id})
+        db_res = await db.tweets.insert_one(new_tweet)
+        new_tweet = await db.tweets.find_one({"_id": db_res.inserted_id})
         reformat_id(new_tweet)
         # print(new_tweet)
         return new_tweet
@@ -45,13 +45,13 @@ def new_tweet(body: TweetRequest, credentials: HTTPAuthorizationCredentials = Se
 
 
 @router.get("/", response_model=TweetList)
-def get_user_tweets(by_user: str):
+async def get_user_tweets(by_user: str):
 
     user_id = str(db.users.find_one({"username": by_user}, {"_id": 1})["_id"])
     if not user_id:
         return HTTPException(status_code=404, detail="username not found")
 
-    tweets = db.tweets.find(
+    tweets = await db.tweets.find(
         {"user_id": user_id, "replied_to": None})
     tweets = [reformat_id(ele) for ele in list(tweets)]
 
@@ -61,9 +61,9 @@ def get_user_tweets(by_user: str):
 # ---
 
 @router.get("/{tweet_id}", response_model=Tweet)
-def get_tweet(tweet_id: str):
+async def get_tweet(tweet_id: str):
 
-    tweet = db.tweets.find_one({"_id": ObjectId(tweet_id)})
+    tweet = await db.tweets.find_one({"_id": ObjectId(tweet_id)})
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
 
@@ -72,7 +72,7 @@ def get_tweet(tweet_id: str):
 
 
 @router.post("/reply", response_model=Tweet)
-def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
@@ -90,11 +90,11 @@ def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCrede
     }
 
     try:
-        db_res = db.tweets.insert_one(new_tweet)
-        new_tweet = db.tweets.find_one({"_id": db_res.inserted_id})
+        db_res = await db.tweets.insert_one(new_tweet)
+        new_tweet = await db.tweets.find_one({"_id": db_res.inserted_id})
         reformat_id(new_tweet)
 
-        org_tweet = db.tweets.find_one_and_update({"_id": ObjectId(body.reply_to)}, {
+        org_tweet = await db.tweets.find_one_and_update({"_id": ObjectId(body.reply_to)}, {
             "$push": {"replies": {
                 "$each": [ObjectId(new_tweet["id"])],
                 "$position": 0
@@ -114,7 +114,7 @@ def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCrede
         "time": datetime.utcnow(),
         "read": False
     }
-    db.notifications.insert_one(new_notification)
+    await db.notifications.insert_one(new_notification)
 
     return new_tweet
 
@@ -123,14 +123,14 @@ def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCrede
 
 
 @router.post("/like", response_model=Tweet)
-def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     try:
-        tweet = db.tweets.find_one_and_update({"_id": ObjectId(body.tweet_id)}, {
+        tweet = await db.tweets.find_one_and_update({"_id": ObjectId(body.tweet_id)}, {
             "$addToSet": {"hearts": ObjectId(userctx["user_id"])},
         })
         if not tweet:
@@ -140,7 +140,7 @@ def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials 
         logger.error(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-    print("tweet", tweet, "\n")
+    # print("tweet", tweet, "\n")
 
     # @TODO add notification to user who's tweet was replied to
     new_notification = {
@@ -151,8 +151,8 @@ def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials 
         "time": datetime.utcnow(),
         "read": False
     }
-    print("notif gen", new_notification, "\n")
-    db.notifications.insert_one(new_notification)
+    # print("notif gen", new_notification, "\n")
+    await db.notifications.insert_one(new_notification)
     reformat_id(tweet)
 
     return tweet
@@ -161,14 +161,14 @@ def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials 
 
 
 @router.post("/unlike")
-def unlike_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
+async def unlike_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials
     userctx = decodeJWT(token)
     if not userctx:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     try:
-        tweet = db.tweets.find_one_and_update({"_id": ObjectId(body.tweet_id)}, {
+        tweet = await db.tweets.find_one_and_update({"_id": ObjectId(body.tweet_id)}, {
             "$pull": {"hearts": ObjectId(userctx["user_id"])},
         })
         if not tweet:
@@ -181,12 +181,12 @@ def unlike_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredential
 
 
 @router.get("/replies/{tweet_id}", response_model=TweetList)
-def get_replies(tweet_id: str):
-    tweet = db.tweets.find_one({"_id": ObjectId(tweet_id)})
+async def get_replies(tweet_id: str):
+    tweet = await db.tweets.find_one({"_id": ObjectId(tweet_id)})
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
 
-    replies = db.tweets.find({
+    replies = await db.tweets.find({
         "replied_to": ObjectId(tweet_id)
     })
     replies = [reformat_id(ele) for ele in list(replies)]
@@ -195,13 +195,13 @@ def get_replies(tweet_id: str):
 
 
 @router.get("/feed/news", response_model=TweetList | Dict[str, str])
-def newsfeed(creds: HTTPAuthorizationCredentials = Security(security)):
+async def newsfeed(creds: HTTPAuthorizationCredentials = Security(security)):
     token = creds.credentials
     userctx = decodeJWT(token)
     if not userctx:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    user = db.users.find_one({"_id": ObjectId(userctx["user_id"])})
+    user = await db.users.find_one({"_id": ObjectId(userctx["user_id"])})
     if not user:
         raise HTTPException(
             status_code=409, detail="Could not process request")
@@ -209,7 +209,7 @@ def newsfeed(creds: HTTPAuthorizationCredentials = Security(security)):
     if "follwing" not in user:
         return {"msg": "No news to show"}
 
-    tweets = db.tweets.find(
+    tweets = await db.tweets.find(
         {"user_id": {"$in": user["following"]}, "replied_to": "null"}
     ).sort("time", -1)
     tweets = [reformat_id(ele) for ele in list(tweets)]

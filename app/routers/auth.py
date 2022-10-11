@@ -29,7 +29,7 @@ def demo(credentials: HTTPAuthorizationCredentials = Security(security)):
 @router.post("/signup", description="creates a new user", response_model=AuthResponse)
 async def signup(body: SignupRequest):
     # check if user already exists with username or email
-    exists = db.users.find_one(
+    exists = await db.users.find_one(
         {"$or": [{"username": body.username}, {"email": body.email}]})
     if exists:
         raise HTTPException(
@@ -42,9 +42,9 @@ async def signup(body: SignupRequest):
         "password": gen_hash_pw(body.password)
     }
     # insert the new user into the database
-    db_res = db.users.insert_one(new_user)
+    db_res = await db.users.insert_one(new_user)
     # get the new user from the database
-    new_user = db.users.find_one({"_id": db_res.inserted_id})
+    new_user = await db.users.find_one({"_id": db_res.inserted_id})
 
     new_user.pop("password")
     reformat_id(new_user)
@@ -64,7 +64,7 @@ async def signup(body: SignupRequest):
 @router.post("/signin", description="signs in a user", response_model=AuthResponse)
 async def signin(body: SigninRequest):
     # check if user exists
-    user = db.users.find_one({"username": body.username})
+    user = await db.users.find_one({"username": body.username})
     if not user:
         raise HTTPException(
             detail="user does not exist", status_code=404)
