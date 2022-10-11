@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from bson.objectid import ObjectId
 from pymongo import TEXT
+from datetime import datetime
 
 from database import db
 from utils.jwt import decodeJWT
@@ -40,8 +41,21 @@ def follow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(s
         logger.log(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-    return {"message": "success"}
+    # notify user
+    new_notification = {
+        "user_id": ObjectId(uid),
+        "link": f"/{userctx['user_name']}",
+        "client": "web",
+        "text": f"{userctx['user_name']} started following you",
+        "time": datetime.utcnow(),
+        "read": False
+    }
+    db.notifications.insert_one(new_notification)
 
+    return {"success": True}
+
+
+# __
 
 @router.post("/unfollow/{uid}")
 def unfollow_user(uid: str, credentials: HTTPAuthorizationCredentials = Security(security)):

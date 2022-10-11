@@ -21,6 +21,8 @@ def reformat_id(obj):
         obj["followers"] = [str(ele) for ele in obj["followers"]]
     if "following" in obj:
         obj["following"] = [str(ele) for ele in obj["following"]]
+    if "user_id" in obj:
+        obj["user_id"] = str(obj["user_id"])
 
     obj.pop("_id")
     return obj

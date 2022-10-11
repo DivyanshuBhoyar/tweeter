@@ -31,12 +31,13 @@ def new_tweet(body: TweetRequest, credentials: HTTPAuthorizationCredentials = Se
         "retweets": [],
         "replies": [],
         "replied_to": None,
+        "media": body.media
     }
     try:
         db_res = db.tweets.insert_one(new_tweet)
         new_tweet = db.tweets.find_one({"_id": db_res.inserted_id})
         reformat_id(new_tweet)
-        print(new_tweet)
+        # print(new_tweet)
         return new_tweet
     except Exception as e:
         logger.error(e)
@@ -85,6 +86,7 @@ def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCrede
         "retweets": [],
         "replies": [],
         "replied_to": ObjectId(body.reply_to),
+        "media": body.media
     }
 
     try:
@@ -99,11 +101,25 @@ def reply_tweet(body: ReplyTweetRequestBody, credentials: HTTPAuthorizationCrede
             }},
         })
 
-        # @TODO add notification to user who's tweet was replied to
-        return new_tweet
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
+
+    #  add notification to user who's tweet was replied to
+    new_notification = {
+        "user_id": org_tweet["user_id"],
+        "link": f"/tweet/{new_tweet['id']}",
+        "client": "web",
+        "text": f"{userctx['user_name']} replied to your tweet",
+        "time": datetime.utcnow(),
+        "read": False
+    }
+    db.notifications.insert_one(new_notification)
+
+    return new_tweet
+
+
+# __
 
 
 @router.post("/like", response_model=Tweet)
@@ -119,13 +135,29 @@ def like_tweet(body: LikeRequestBody, credentials: HTTPAuthorizationCredentials 
         })
         if not tweet:
             raise HTTPException(status_code=404, detail="Tweet not found")
-        print(tweet)
-        # @TODO add notification to user who's tweet was replied to
-        reformat_id(tweet)
-        return tweet
+        # print(tweet)
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
+
+    print("tweet", tweet, "\n")
+
+    # @TODO add notification to user who's tweet was replied to
+    new_notification = {
+        "user_id": tweet["user_id"],
+        "link": f"/tweet/{tweet['_id']}",
+        "client": "web",
+        "text": f"{userctx['user_name']} liked your tweet",
+        "time": datetime.utcnow(),
+        "read": False
+    }
+    print("notif gen", new_notification, "\n")
+    db.notifications.insert_one(new_notification)
+    reformat_id(tweet)
+
+    return tweet
+
+# __
 
 
 @router.post("/unlike")

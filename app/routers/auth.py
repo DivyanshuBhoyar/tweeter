@@ -23,7 +23,7 @@ def demo(credentials: HTTPAuthorizationCredentials = Security(security)):
     if not decoded:
         raise HTTPException(status_code=400, detail="Not authorized")
 
-    return {"message": "Authorized"}
+    return {"message": "Authorized", "username": decoded["user_name"], "user_id": decoded["user_id"]}
 
 
 @router.post("/signup", description="creates a new user", response_model=AuthResponse)
